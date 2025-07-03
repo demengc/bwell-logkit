@@ -1,0 +1,22 @@
+# Development dependencies
+-r requirements.txt
+
+# Testing
+pytest>=8.2.0
+pytest-cov>=5.0.0
+pytest-mock>=3.14.0
+
+# Code quality
+black>=24.4.2
+flake8>=7.0.0
+mypy>=1.10.0
+pandas-stubs>=2.2.2
+isort>=5.13.2
+
+# Development tools
+pre-commit>=3.7.0
+tox>=4.14.2
+
+# Documentation
+sphinx>=7.3.7
+sphinx-rtd-theme>=2.0.0
