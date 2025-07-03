@@ -1,6 +1,7 @@
 """Scene management and segmentation for bWell log data."""
 
 from collections import defaultdict
+from typing import Literal, Optional
 
 from .exceptions import SceneNotFoundError
 from .types import LogRecord, RecordFields, RecordTypes, SceneInfo
@@ -95,32 +96,42 @@ class SceneManager:
             <= info.end_game_time_secs
         ]
 
-    def get_all_scene_instances(self, scene_name: str) -> list[SceneInfo]:
-        """Get information about all instances of a scene."""
-        if scene_name not in self._scenes:
-            raise SceneNotFoundError(scene_name, 0, self.list_scenes())
-        return self._scenes[scene_name].copy()
-
-    def get_all_scene_instances_chron(
-        self, use_epoch_time: bool = False
+    def get_scene_instances(
+        self,
+        scene_name: Optional[str] = None,
+        sort_by: Optional[Literal["game_time", "epoch"]] = None,
     ) -> list[SceneInfo]:
-        """Get all scene instances sorted by their start timestamp.
+        """
+        Get information about scene instances.
 
         Args:
-            use_epoch_time: If True, sort by epoch milliseconds.
-                          If False, sort by game time seconds (default).
+            scene_name:
+                If provided, return only instances of that specific scene.
+                If None, return instances of *all* scenes.
+            sort_by:
+                If 'game_time', sort ascending by start_game_time_secs.
+                If 'epoch',     sort ascending by start_millis_since_epoch.
+                If None,        preserve insertion order, grouped by scene.
 
-        Returns:
-            List of SceneInfo objects sorted chronologically.
+        Raises:
+            SceneNotFoundError: if scene_name is provided but not found.
         """
-        all_scenes = []
-        for instances in self._scenes.values():
-            all_scenes.extend(instances)
 
-        if use_epoch_time:
-            return sorted(all_scenes, key=lambda s: s.start_millis_since_epoch)
+        if scene_name is not None:
+            if scene_name not in self._scenes:
+                raise SceneNotFoundError(scene_name, 0, self.list_scenes())
+            instances = list(self._scenes[scene_name])
         else:
-            return sorted(all_scenes, key=lambda s: s.start_game_time_secs)
+            instances = []
+            for inst_list in self._scenes.values():
+                instances.extend(inst_list)
+
+        if sort_by == "epoch":
+            instances.sort(key=lambda s: s.start_millis_since_epoch)
+        elif sort_by == "game_time":
+            instances.sort(key=lambda s: s.start_game_time_secs)
+
+        return instances
 
     def get_scene_summary(self) -> dict[str, dict]:
         """Get a summary of all scenes and their instances."""
