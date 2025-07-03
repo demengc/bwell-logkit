@@ -93,7 +93,7 @@ class TestSceneManager:
     def test_get_all_scene_instances(self, sample_records):
         """Test getting all instances of a scene."""
         manager = SceneManager(sample_records)
-        instances = manager.get_all_scene_instances("MainMenu")
+        instances = manager.get_scene_instances("MainMenu")
 
         assert isinstance(instances, list)
         assert len(instances) == 1
@@ -104,12 +104,12 @@ class TestSceneManager:
         manager = SceneManager(sample_records)
 
         with pytest.raises(SceneNotFoundError):
-            manager.get_all_scene_instances("NonExistentScene")
+            manager.get_scene_instances("NonExistentScene")
 
-    def test_get_all_scene_instances_chron(self, sample_records):
+    def test_get_scene_instances_sort_gt(self, sample_records):
         """Test getting all scenes in chronological order."""
         manager = SceneManager(sample_records)
-        chron_scenes = manager.get_all_scene_instances_chron()
+        chron_scenes = manager.get_scene_instances(sort_by="game_time")
 
         assert isinstance(chron_scenes, list)
         assert len(chron_scenes) == 2  # MainMenu and GameLevel1
@@ -119,10 +119,10 @@ class TestSceneManager:
             chron_scenes[0].start_game_time_secs <= chron_scenes[1].start_game_time_secs
         )
 
-    def test_get_all_scene_instances_chron_epoch(self, sample_records):
+    def test_get_scene_instances_sort_epoch(self, sample_records):
         """Test getting all scenes in chronological order by epoch time."""
         manager = SceneManager(sample_records)
-        chron_scenes = manager.get_all_scene_instances_chron(use_epoch_time=True)
+        chron_scenes = manager.get_scene_instances(sort_by="epoch")
 
         assert isinstance(chron_scenes, list)
         assert len(chron_scenes) == 2
