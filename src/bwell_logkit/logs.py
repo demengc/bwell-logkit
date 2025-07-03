@@ -44,7 +44,12 @@ class LogSession:
     """
 
     def __init__(
-        self, records: list[LogRecord], metadata: dict[str, Any] | None = None
+        self,
+        records: list[LogRecord],
+        metadata: dict[str, Any] | None = None,
+        *,
+        initialize_scene_manager: bool = False,
+        _scene_manager: "SceneManager | None" = None,
     ):
         """
         Initialize a log session.
@@ -52,13 +57,20 @@ class LogSession:
         Args:
             records: List of log records
             metadata: Optional metadata about the session
+            initialize_scene_manager: Whether to initialize scene manager immediately
+            _scene_manager: Optional pre-existing scene manager (from parent session)
         """
         # Sort records by timestamp and remove duplicates
         self._records = _clean_records(records)
         self._metadata = metadata or {}
 
-        # Lazy-loaded components
-        self._scene_manager: SceneManager | None = None
+        # Lazy-loaded components (unless eagerly initialized)
+        # _scene_manager can either be provided by a parent session or lazily/eagerly
+        # created here depending on `initialize_scene_manager`.
+        self._scene_manager: SceneManager | None = _scene_manager
+        if initialize_scene_manager and self._scene_manager is None:
+            self._scene_manager = SceneManager(self._records)
+
         self._extractor: LogSessionExtractor | None = None
 
     @property
@@ -145,7 +157,11 @@ class LogSession:
             LogSession: New session with filtered records
         """
         filtered_records = [r for r in self._records if condition(r)]
-        return LogSession(filtered_records, self._metadata)
+        return LogSession(
+            filtered_records,
+            self._metadata,
+            _scene_manager=self._scene_manager,
+        )
 
     def filter_type(self, *record_types: str) -> "LogSession":
         """
