@@ -3,8 +3,8 @@ Core LogSession and SceneView classes for bWell log analysis.
 """
 
 import copy
-import json
 from collections import defaultdict
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
 from .exceptions import SceneNotFoundError
@@ -16,21 +16,35 @@ if TYPE_CHECKING:
     import pandas as pd
 
 
+def _freeze(obj: Any) -> Any:
+    """Freeze unhashable types."""
+    if isinstance(obj, Mapping):
+        # For dicts: produce a frozenset of (key, frozen_value) pairs
+        return frozenset((key, _freeze(val)) for key, val in obj.items())
+    elif isinstance(obj, Sequence) and not isinstance(obj, (str, bytes)):
+        # For lists/tuples: produce a tuple of frozen elements
+        return tuple(_freeze(item) for item in obj)
+    else:
+        # Primitives stay as-is
+        return obj
+
+
 def _clean_records(records: list[LogRecord]) -> list[LogRecord]:
     """Clean and deduplicate records."""
-    # Create deduplication key based on hash of entire record
     seen = set()
     cleaned = []
 
-    for record in records:
-        record_json = json.dumps(record, sort_keys=True, default=str)
-        record_hash = hash(record_json)
+    for rec in records:
+        # Make a shallow copy, drop the ID
+        tmp = dict(rec)
+        tmp.pop(RecordFields.ID, None)
 
-        if record_hash not in seen:
-            seen.add(record_hash)
-            cleaned.append(record)
+        key = _freeze(tmp)
 
-    # Sort by timestamp
+        if key not in seen:
+            seen.add(key)
+            cleaned.append(rec)
+
     cleaned.sort(key=lambda r: r.get(RecordFields.GAME_TIME_SECS, 0))
     return cleaned
 

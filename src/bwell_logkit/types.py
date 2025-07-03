@@ -19,6 +19,7 @@ class RecordFields:
     RECORD_TYPE = "myType"
     GAME_TIME_SECS = "timestamp"
     MILLIS_SINCE_EPOCH = "msSinceEpoch"
+    ID = "ID"
 
     class SceneEntry:
         """Fields specific to SceneEntryRecord."""
