@@ -115,6 +115,35 @@ def main():
         index = scene_instance.instance
         print(f"   {name}: {index}")
 
+    # 10. Adding participant information to metadata
+    print("\n10. Adding participant information to metadata...")
+    session.set_metadata("participant_id", "P001")
+    session.set_metadata("participant_age", 25)
+    session.set_metadata("study_condition", "control")
+
+    # Or update multiple metadata fields at once
+    participant_info = {
+        "participant_id": "P001",
+        "participant_age": 25,
+        "study_condition": "control",
+        "session_date": "2024-01-15",
+        "researcher": "Dr. Smith",
+    }
+    session.update_metadata(participant_info)
+
+    # Access the metadata
+    print("Session metadata:", session.metadata)
+
+    # Metadata is preserved when filtering
+    filtered_session = session.filter_type(RecordTypes.ABSOLUTE_ACTIVITY)
+    print("Filtered session still has metadata:", filtered_session.metadata)
+
+    # Scene views also inherit and can modify metadata
+    if session.list_scenes():
+        scene = session.scene(session.list_scenes()[0])
+        scene.set_metadata("scene_notes", "Participant seemed engaged")
+        print("Scene metadata:", scene.metadata)
+
     print("\n=== Example completed successfully! ===")
 
 

@@ -97,6 +97,29 @@ class LogSession:
         """Get session metadata."""
         return self._metadata.copy()
 
+    def update_metadata(self, metadata: dict[str, Any]) -> None:
+        """
+        Update session metadata with new values.
+
+        Args:
+            metadata: Dictionary of metadata to add/update
+        """
+        self._metadata.update(metadata)
+
+    def set_metadata(self, key: str, value: Any) -> None:
+        """
+        Set a single metadata value.
+
+        Args:
+            key: Metadata key
+            value: Metadata value
+        """
+        self._metadata[key] = value
+
+    def clear_metadata(self) -> None:
+        """Clear all metadata."""
+        self._metadata.clear()
+
     def __len__(self) -> int:
         """Return number of records."""
         return len(self._records)
@@ -351,6 +374,29 @@ class SceneView:
     def metadata(self) -> dict[str, Any]:
         """Get session metadata."""
         return self._session.metadata
+
+    def update_metadata(self, metadata: dict[str, Any]) -> None:
+        """
+        Update session metadata with new values.
+
+        Args:
+            metadata: Dictionary of metadata to add/update
+        """
+        self._session.update_metadata(metadata)
+
+    def set_metadata(self, key: str, value: Any) -> None:
+        """
+        Set a single metadata value.
+
+        Args:
+            key: Metadata key
+            value: Metadata value
+        """
+        self._session.set_metadata(key, value)
+
+    def clear_metadata(self) -> None:
+        """Clear all metadata."""
+        self._session.clear_metadata()
 
     @property
     def extractor(self) -> SceneViewExtractor:

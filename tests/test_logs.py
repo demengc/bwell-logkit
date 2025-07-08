@@ -98,6 +98,46 @@ class TestLogSession:
         # Original should be unchanged
         assert "modified" not in session.metadata
 
+    def test_update_metadata(self):
+        """Test updating metadata with a dictionary."""
+        session = LogSession([], {"original": "value"})
+
+        # Update with new metadata
+        new_metadata = {"participant_id": "P001", "age": 25}
+        session.update_metadata(new_metadata)
+
+        # Should contain both original and new metadata
+        expected = {"original": "value", "participant_id": "P001", "age": 25}
+        assert session.metadata == expected
+
+    def test_set_metadata(self):
+        """Test setting individual metadata values."""
+        session = LogSession([])
+
+        # Set individual metadata values
+        session.set_metadata("participant_id", "P001")
+        session.set_metadata("study_condition", "control")
+
+        expected = {"participant_id": "P001", "study_condition": "control"}
+        assert session.metadata == expected
+
+    def test_clear_metadata(self):
+        """Test clearing all metadata."""
+        session = LogSession([], {"test": "value", "another": "data"})
+
+        # Clear all metadata
+        session.clear_metadata()
+
+        assert session.metadata == {}
+
+    def test_metadata_update_overwrites_existing(self):
+        """Test that updating metadata overwrites existing keys."""
+        session = LogSession([], {"key": "old_value"})
+
+        session.set_metadata("key", "new_value")
+
+        assert session.metadata == {"key": "new_value"}
+
     def test_repr(self, sample_records):
         """Test string representation."""
         session = LogSession(sample_records)
@@ -295,6 +335,53 @@ class TestSceneView:
         scene_view = SceneView(session, scene_info)
 
         assert scene_view.metadata == metadata
+
+    def test_update_metadata_scene_view(self, sample_records):
+        """Test updating metadata through SceneView."""
+        session = LogSession(sample_records, {"original": "value"})
+        scene_info = SceneInfo("Test", 0, 1.0, 10.0, 1000, 10000)
+        scene_view = SceneView(session, scene_info)
+
+        # Update metadata through scene view
+        scene_view.update_metadata({"participant_id": "P001", "scene_notes": "engaged"})
+
+        expected = {
+            "original": "value",
+            "participant_id": "P001",
+            "scene_notes": "engaged",
+        }
+        assert scene_view.metadata == expected
+        # Should also update the underlying session
+        assert session.metadata == expected
+
+    def test_set_metadata_scene_view(self, sample_records):
+        """Test setting individual metadata values through SceneView."""
+        session = LogSession(sample_records)
+        scene_info = SceneInfo("Test", 0, 1.0, 10.0, 1000, 10000)
+        scene_view = SceneView(session, scene_info)
+
+        # Set metadata through scene view
+        scene_view.set_metadata("scene_notes", "participant looked confused")
+        scene_view.set_metadata("researcher", "Dr. Smith")
+
+        expected = {
+            "scene_notes": "participant looked confused",
+            "researcher": "Dr. Smith",
+        }
+        assert scene_view.metadata == expected
+        assert session.metadata == expected
+
+    def test_clear_metadata_scene_view(self, sample_records):
+        """Test clearing metadata through SceneView."""
+        session = LogSession(sample_records, {"test": "value", "another": "data"})
+        scene_info = SceneInfo("Test", 0, 1.0, 10.0, 1000, 10000)
+        scene_view = SceneView(session, scene_info)
+
+        # Clear metadata through scene view
+        scene_view.clear_metadata()
+
+        assert scene_view.metadata == {}
+        assert session.metadata == {}
 
     def test_extractor_property(self, sample_records):
         """Test extractor property lazy loading."""
