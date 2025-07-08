@@ -2,7 +2,7 @@
 File reading and parsing for bWell log data.
 """
 
-import json
+import orjson
 from pathlib import Path
 from typing import Any
 
@@ -73,13 +73,13 @@ def read_records(file_path: FilePath, encoding: str = "utf-8") -> list[LogRecord
 
         # Try parsing as-is first
         try:
-            data = json.loads(content)
-        except json.JSONDecodeError:
+            data = orjson.loads(content)
+        except orjson.JSONDecodeError:
             # Attempt to heal the JSON
             healed_content = _heal_json(content)
             try:
-                data = json.loads(healed_content)
-            except json.JSONDecodeError as e:
+                data = orjson.loads(healed_content)
+            except orjson.JSONDecodeError as e:
                 raise LogReadError(
                     f"Failed to parse JSON even after healing: {e}",
                     str(file_path),

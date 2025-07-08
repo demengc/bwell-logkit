@@ -2,7 +2,7 @@
 Tests for the reader module.
 """
 
-import json
+import orjson
 
 import pytest
 
@@ -118,7 +118,7 @@ class TestJsonHealing:
         malformed = '{"data": [{"test": "value"},'
         healed = _heal_json(malformed)
 
-        result = json.loads(healed)
+        result = orjson.loads(healed)
         assert result["data"][0]["test"] == "value"
 
     def test_heal_json_missing_closing_bracket_only(self):
@@ -126,7 +126,7 @@ class TestJsonHealing:
         malformed = '{"data": [{"test": "value"}]'
         healed = _heal_json(malformed)
 
-        result = json.loads(healed)
+        result = orjson.loads(healed)
         assert result["data"][0]["test"] == "value"
 
     def test_heal_json_already_valid(self):
@@ -134,7 +134,7 @@ class TestJsonHealing:
         valid = '{"data": [{"test": "value"}]}'
         healed = _heal_json(valid)
 
-        result = json.loads(healed)
+        result = orjson.loads(healed)
         assert result["data"][0]["test"] == "value"
 
     def test_heal_json_strip_whitespace(self):
@@ -142,7 +142,7 @@ class TestJsonHealing:
         malformed = '  {"data": [{"test": "value"}]  '
         healed = _heal_json(malformed)
 
-        result = json.loads(healed)
+        result = orjson.loads(healed)
         assert result["data"][0]["test"] == "value"
 
 
