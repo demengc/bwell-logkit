@@ -2,10 +2,10 @@
 Pytest configuration and shared fixtures for bwell-logkit tests.
 """
 
-import orjson
 from pathlib import Path
 from typing import Any, Dict, List
 
+import orjson
 import pytest
 
 
