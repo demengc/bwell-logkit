@@ -2,9 +2,10 @@
 File reading and parsing for bWell log data.
 """
 
-import orjson
 from pathlib import Path
 from typing import Any
+
+import orjson
 
 from .exceptions import LogReadError
 from .logs import LogSession

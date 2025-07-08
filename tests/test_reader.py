@@ -3,7 +3,6 @@ Tests for the reader module.
 """
 
 import orjson
-
 import pytest
 
 from bwell_logkit.exceptions import LogReadError

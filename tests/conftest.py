@@ -116,7 +116,7 @@ def malformed_log_data() -> str:
 def sample_log_file(sample_log_data, tmp_path) -> Path:
     """Create a temporary log file with sample data."""
     log_file = tmp_path / "test_log.json"
-    log_file.write_text(orjson.dumps(sample_log_data).decode('utf-8'))
+    log_file.write_text(orjson.dumps(sample_log_data).decode("utf-8"))
     return log_file
 
 
@@ -132,7 +132,7 @@ def truncated_log_file(truncated_log_data, tmp_path) -> Path:
 def empty_log_file(empty_log_data, tmp_path) -> Path:
     """Create a temporary empty log file."""
     log_file = tmp_path / "empty_log.json"
-    log_file.write_text(orjson.dumps(empty_log_data).decode('utf-8'))
+    log_file.write_text(orjson.dumps(empty_log_data).decode("utf-8"))
     return log_file
 
 
@@ -176,7 +176,7 @@ def log_directory(tmp_path, sample_log_data) -> Path:
         for record in data["data"]:
             record["timestamp"] = record["timestamp"] + (i * 100)
             record["msSinceEpoch"] = record["msSinceEpoch"] + (i * 100000)
-        log_file.write_text(orjson.dumps(data).decode('utf-8'))
+        log_file.write_text(orjson.dumps(data).decode("utf-8"))
 
     return log_dir
 
