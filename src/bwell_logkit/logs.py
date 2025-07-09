@@ -2,6 +2,7 @@
 Core LogSession and SceneView classes for bWell log analysis.
 """
 
+import bisect
 import copy
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
@@ -45,7 +46,7 @@ def _clean_records(records: list[LogRecord]) -> list[LogRecord]:
             seen.add(key)
             cleaned.append(rec)
 
-    cleaned.sort(key=lambda r: r.get(RecordFields.GAME_TIME_SECS, 0))
+    cleaned.sort(key=lambda r: r.get(RecordFields.GAME_TIME_SECS, 0.0))
     return cleaned
 
 
@@ -216,6 +217,9 @@ class LogSession:
         """
         Filter by game time range.
 
+        Since records are sorted by timestamp, this uses binary search to find the
+        range boundaries in O(log n) time instead of O(n).
+
         Args:
             start: Start time in seconds
             end: End time in seconds
@@ -223,8 +227,20 @@ class LogSession:
         Returns:
             LogSession: New session with filtered records
         """
-        return self.filter(
-            lambda r: start <= r.get(RecordFields.GAME_TIME_SECS, 0) <= end
+        if not self._records:
+            return LogSession([], self._metadata, _scene_manager=self._scene_manager)
+
+        timestamps = [r.get(RecordFields.GAME_TIME_SECS, 0.0) for r in self._records]
+
+        start_idx = bisect.bisect_left(timestamps, start)
+        end_idx = bisect.bisect_right(timestamps, end)
+
+        filtered_records = self._records[start_idx:end_idx]
+
+        return LogSession(
+            filtered_records,
+            self._metadata,
+            _scene_manager=self._scene_manager,
         )
 
     def get_stats(self) -> dict[str, Any]:
