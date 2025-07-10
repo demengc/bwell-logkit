@@ -8,6 +8,7 @@ application.
 ## Features
 
 - **Easy log file reading** with automatic JSON healing for truncated files
+- **Parallel directory loading** for processing multiple files efficiently
 - **Flexible record filtering** by type, timestamp, and custom criteria
 - **Scene-based analysis** with automatic scene segmentation and metadata
 - **DataFrame extraction** for data analysis with pandas integration
@@ -24,10 +25,18 @@ pip install git+https://github.com/demengc/bwell-logkit.git
 ## Quick Start
 
 ```python
-from bwell_logkit import load_log, RecordTypes, MovementSources
+from bwell_logkit import load_log, load_all_logs, RecordTypes, MovementSources
 
-# Load bWell log file
+# Load a single bWell log file
 session = load_log("path/to/bWellLogAll20250628112233.json")
+
+# Or, load all log files from a directory (recursively, parallel)
+sessions = load_all_logs(
+    "path/to/log_directory",
+    file_pattern="*.json",  # Custom file pattern
+    max_workers=4,          # Limit parallel workers
+    skip_errors=False        # Skip files that fail to load
+)
 
 # Basic session info
 print(f"Loaded {len(session)} records")

@@ -2,6 +2,7 @@
 File reading and parsing for bWell log data.
 """
 
+import concurrent.futures
 from pathlib import Path
 from typing import Any
 
@@ -120,3 +121,90 @@ def load_log(file_path: FilePath, **kwargs: Any) -> LogSession:
     """
     records = read_records(file_path, **kwargs)
     return LogSession(records, metadata={"file_path": str(file_path)})
+
+
+def load_all_logs(
+    folder_path: FilePath,
+    *,
+    file_pattern: str = "*.json",
+    max_workers: int | None = None,
+    skip_errors: bool = True,
+    **kwargs: Any,
+) -> dict[str, LogSession]:
+    """
+    Load all log files from a folder recursively in parallel.
+
+    Args:
+        folder_path: Path to the folder containing log files
+        file_pattern: Glob pattern for log files (default: "*.json")
+        max_workers: Maximum # of workers (default: None / TPE default)
+        skip_errors: If True, skip failed files; if False, raise on 1st error
+        **kwargs: Additional options passed to read_records
+
+    Returns:
+        dict[str, LogSession]: Dict mapping relative file paths to LogSessions
+
+    Raises:
+        LogReadError: If folder doesn't exist / if skip_errors=False and any
+        file fails to load
+    """
+    folder_path = Path(folder_path)
+
+    if not folder_path.exists():
+        raise LogReadError(f"Folder not found: {folder_path}", str(folder_path))
+
+    if not folder_path.is_dir():
+        raise LogReadError(f"Path is not a directory: {folder_path}", str(folder_path))
+
+    # Find all log files recursively
+    log_files = list(folder_path.rglob(file_pattern))
+
+    if not log_files:
+        return {}
+
+    def load_single_log(file_path: Path) -> tuple[str, LogSession | Exception]:
+        """Load a single log file and return (relative_path, result)."""
+        try:
+            relative_path = file_path.relative_to(folder_path).as_posix()
+            session = load_log(file_path, **kwargs)
+            # Update metadata to include relative path
+            session.set_metadata("relative_path", relative_path)
+            return (relative_path, session)
+        except Exception as e:
+            relative_path = file_path.relative_to(folder_path).as_posix()
+            return (relative_path, e)
+
+    results: dict[str, LogSession] = {}
+    errors: list[tuple[str, Exception]] = []
+
+    # Use ThreadPoolExecutor for parallel loading
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all tasks
+        future_to_file = {
+            executor.submit(load_single_log, file_path): file_path
+            for file_path in log_files
+        }
+
+        # Collect results
+        for future in concurrent.futures.as_completed(future_to_file):
+            relative_path, result = future.result()
+
+            if isinstance(result, Exception):
+                errors.append((relative_path, result))
+                if not skip_errors:
+                    raise LogReadError(
+                        f"Failed to load log file '{relative_path}': {result}",
+                        relative_path,
+                        result,
+                    )
+            else:
+                results[relative_path] = result
+
+    # Log errors if skip_errors=True but there were some failures
+    if errors and skip_errors:
+        failed_files = [path for path, _ in errors]
+        print(
+            f"Warning: Failed to load {len(failed_files)} file(s): " f"{failed_files}"
+        )
+
+    return results

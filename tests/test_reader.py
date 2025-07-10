@@ -2,12 +2,14 @@
 Tests for the reader module.
 """
 
+from pathlib import Path
+
 import orjson
 import pytest
 
 from bwell_logkit.exceptions import LogReadError
 from bwell_logkit.logs import LogSession
-from bwell_logkit.reader import _heal_json, load_log, read_records
+from bwell_logkit.reader import _heal_json, load_all_logs, load_log, read_records
 
 
 class TestReadRecords:
@@ -177,3 +179,220 @@ class TestEdgeCases:
             read_records(bad_root_file)
 
         assert "root must be an object" in str(exc_info.value)
+
+
+class TestLoadAllLogs:
+    """Test cases for load_all_logs function."""
+
+    def test_load_all_logs_basic(self, log_directory):
+        """Test basic functionality of loading all logs from a directory."""
+        sessions = load_all_logs(log_directory)
+
+        # Should have 3 log files from the fixture
+        assert len(sessions) == 3
+        assert all(isinstance(session, LogSession) for session in sessions.values())
+
+        # Check relative paths are correct
+        expected_paths = {"log_0.json", "log_1.json", "log_2.json"}
+        assert set(sessions.keys()) == expected_paths
+
+        # Check each session has records
+        for path, session in sessions.items():
+            assert len(session) == 9  # Each log has 9 records from fixture
+            assert session.metadata["relative_path"] == path
+            assert "file_path" in session.metadata
+
+    def test_load_all_logs_recursive(self, tmp_path, sample_log_data):
+        """Test recursive directory search."""
+        # Create nested directory structure
+        base_dir = tmp_path / "logs"
+        base_dir.mkdir()
+
+        # Create subdirectories
+        adhd_dir = base_dir / "ADHD"
+        adhd_dir.mkdir()
+        control_dir = base_dir / "control"
+        control_dir.mkdir()
+
+        # Create log files in different directories
+        (base_dir / "session_1.json").write_text(orjson.dumps(sample_log_data).decode())
+        (adhd_dir / "participant_01.json").write_text(
+            orjson.dumps(sample_log_data).decode()
+        )
+        (control_dir / "participant_02.json").write_text(
+            orjson.dumps(sample_log_data).decode()
+        )
+
+        sessions = load_all_logs(base_dir)
+
+        assert len(sessions) == 3
+        expected_paths = {
+            "session_1.json",
+            "ADHD/participant_01.json",
+            "control/participant_02.json",
+        }
+        assert set(sessions.keys()) == expected_paths
+
+        # Check relative paths in metadata
+        for path, session in sessions.items():
+            assert session.metadata["relative_path"] == path
+
+    def test_load_all_logs_custom_pattern(self, tmp_path, sample_log_data):
+        """Test custom file pattern filtering."""
+        log_dir = tmp_path / "logs"
+        log_dir.mkdir()
+
+        # Create files with different extensions
+        (log_dir / "log1.json").write_text(orjson.dumps(sample_log_data).decode())
+        (log_dir / "log2.bwell").write_text(orjson.dumps(sample_log_data).decode())
+        (log_dir / "log3.txt").write_text("not a log file")
+
+        # Test default pattern (*.json)
+        sessions_json = load_all_logs(log_dir)
+        assert len(sessions_json) == 1
+        assert "log1.json" in sessions_json
+
+        # Test custom pattern (*.bwell)
+        sessions_bwell = load_all_logs(log_dir, file_pattern="*.bwell")
+        assert len(sessions_bwell) == 1
+        assert "log2.bwell" in sessions_bwell
+
+        # Test wildcard pattern - only valid JSON files will load successfully
+        sessions_all = load_all_logs(log_dir, file_pattern="log*")
+        assert len(sessions_all) == 2  # Only valid JSON files loaded (log3.txt fails)
+
+    def test_load_all_logs_empty_directory(self, tmp_path):
+        """Test behavior with empty directory."""
+        empty_dir = tmp_path / "empty"
+        empty_dir.mkdir()
+
+        sessions = load_all_logs(empty_dir)
+        assert sessions == {}
+
+    def test_load_all_logs_nonexistent_directory(self, tmp_path):
+        """Test error handling for non-existent directory."""
+        non_existent = tmp_path / "does_not_exist"
+
+        with pytest.raises(LogReadError) as exc_info:
+            load_all_logs(non_existent)
+
+        assert "Folder not found" in str(exc_info.value)
+        assert str(non_existent) in str(exc_info.value)
+
+    def test_load_all_logs_file_instead_of_directory(self, sample_log_file):
+        """Test error handling when path is a file, not a directory."""
+        with pytest.raises(LogReadError) as exc_info:
+            load_all_logs(sample_log_file)
+
+        assert "Path is not a directory" in str(exc_info.value)
+
+    def test_load_all_logs_skip_errors_true(self, tmp_path, sample_log_data):
+        """Test error handling with skip_errors=True."""
+        log_dir = tmp_path / "logs"
+        log_dir.mkdir()
+
+        # Create valid and invalid log files
+        (log_dir / "valid.json").write_text(orjson.dumps(sample_log_data).decode())
+        (log_dir / "invalid.json").write_text("invalid json content")
+        (log_dir / "empty.json").write_text("")
+
+        # Should skip errors and return only valid sessions
+        sessions = load_all_logs(log_dir, skip_errors=True)
+
+        assert len(sessions) == 1
+        assert "valid.json" in sessions
+        assert isinstance(sessions["valid.json"], LogSession)
+
+    def test_load_all_logs_skip_errors_false(self, tmp_path, sample_log_data):
+        """Test error handling with skip_errors=False."""
+        log_dir = tmp_path / "logs"
+        log_dir.mkdir()
+
+        # Create valid and invalid log files
+        (log_dir / "valid.json").write_text(orjson.dumps(sample_log_data).decode())
+        (log_dir / "invalid.json").write_text("invalid json content")
+
+        # Should raise error on first invalid file
+        with pytest.raises(LogReadError) as exc_info:
+            load_all_logs(log_dir, skip_errors=False)
+
+        assert "Failed to load log file" in str(exc_info.value)
+
+    def test_load_all_logs_kwargs_passed_through(self, tmp_path, sample_log_data):
+        """Test that kwargs are passed through to read_records."""
+        log_dir = tmp_path / "logs"
+        log_dir.mkdir()
+
+        log_file = log_dir / "test.json"
+        log_file.write_text(orjson.dumps(sample_log_data).decode())
+
+        # Test encoding parameter is passed through
+        sessions = load_all_logs(log_dir, encoding="utf-8")
+        assert len(sessions) == 1
+        assert "test.json" in sessions
+
+    def test_load_all_logs_max_workers(self, log_directory):
+        """Test max_workers parameter."""
+        # Test with different max_workers values
+        sessions_default = load_all_logs(log_directory)
+        sessions_limited = load_all_logs(log_directory, max_workers=2)
+        sessions_single = load_all_logs(log_directory, max_workers=1)
+
+        # Results should be the same regardless of worker count
+        assert (
+            len(sessions_default) == len(sessions_limited) == len(sessions_single) == 3
+        )
+        assert (
+            set(sessions_default.keys())
+            == set(sessions_limited.keys())
+            == set(sessions_single.keys())
+        )
+
+    def test_load_all_logs_metadata_preservation(self, log_directory):
+        """Test that original metadata is preserved and new metadata is
+        added."""
+        sessions = load_all_logs(log_directory)
+
+        for relative_path, session in sessions.items():
+            # Should have original file_path metadata
+            assert "file_path" in session.metadata
+
+            # Should have new relative_path metadata
+            assert session.metadata["relative_path"] == relative_path
+
+            # file_path should be absolute, relative_path should be relative
+            assert Path(session.metadata["file_path"]).is_absolute()
+            assert not Path(relative_path).is_absolute()
+
+    def test_load_all_logs_large_directory(self, tmp_path, sample_log_data):
+        """Test performance with larger number of files."""
+        log_dir = tmp_path / "many_logs"
+        log_dir.mkdir()
+
+        # Create 20 log files
+        num_files = 20
+        for i in range(num_files):
+            log_file = log_dir / f"log_{i:02d}.json"
+            # Modify data slightly to make each file unique
+            data = sample_log_data.copy()
+            for record in data["data"]:
+                record["timestamp"] = record["timestamp"] + i
+            log_file.write_text(orjson.dumps(data).decode())
+
+        sessions = load_all_logs(log_dir)
+
+        assert len(sessions) == num_files
+        # Verify all files were loaded correctly
+        for i in range(num_files):
+            expected_path = f"log_{i:02d}.json"
+            assert expected_path in sessions
+            assert len(sessions[expected_path]) == 9  # Each has 9 records
+
+    def test_load_all_logs_string_path(self, log_directory):
+        """Test that string paths work as well as Path objects."""
+        sessions_path = load_all_logs(log_directory)
+        sessions_str = load_all_logs(str(log_directory))
+
+        # Results should be identical
+        assert sessions_path.keys() == sessions_str.keys()
+        assert len(sessions_path) == len(sessions_str)

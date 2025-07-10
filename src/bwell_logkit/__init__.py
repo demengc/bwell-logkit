@@ -10,7 +10,7 @@ from .exceptions import (
     SceneNotFoundError,
 )
 from .logs import LogSession, SceneView
-from .reader import load_log, read_records
+from .reader import load_all_logs, load_log, read_records
 from .scene import SceneManager
 from .types import (
     FilePath,
@@ -30,6 +30,7 @@ __email__ = "contact@demeng.dev"
 __all__ = [
     # Main entry points
     "load_log",
+    "load_all_logs",
     "read_records",
     # Core classes
     "LogSession",

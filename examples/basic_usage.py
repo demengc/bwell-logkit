@@ -10,13 +10,13 @@ This example demonstrates the core functionality:
 
 from pathlib import Path
 
-from bwell_logkit import load_log
+from bwell_logkit import load_all_logs, load_log
 from bwell_logkit.types import MovementSources, RecordTypes
 
 
 def main():
     # Replace with your actual log file path
-    log_file = Path("sample_log.json")
+    log_file = Path("path/to/sample_log.json")
 
     # Check if file exists (you'll need to provide your own log file)
     if not log_file.exists():
@@ -27,9 +27,21 @@ def main():
     print("=== Basic bwell-logkit Usage Example ===\n")
 
     # 1. Load the log file
-    print("1. Loading log file...")
+    print("1a. Loading log file...")
     session = load_log(log_file)
     print(f"   Loaded {len(session)} records")
+
+    # Alternatively, load all logs from a directory recursively and in parallel
+    print("1b. Loading all logs from a directory...")
+    sessions = load_all_logs(
+        "path/to",
+        file_pattern="*.json",  # Custom file pattern
+        max_workers=4,  # Limit parallel workers
+        skip_errors=False,  # Skip files that fail to load
+    )
+
+    for relative_path, session in sessions.items():
+        print(f"   {relative_path}: {len(session)} records")
 
     # 2. Get basic statistics
     print("\n2. Session statistics:")
