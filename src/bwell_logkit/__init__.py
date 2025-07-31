@@ -23,7 +23,7 @@ from .types import (
     Scenes,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Demeng Chen"
 __email__ = "contact@demeng.dev"
 
