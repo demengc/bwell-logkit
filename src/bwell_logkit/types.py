@@ -3,46 +3,14 @@ Type definitions for bwell-logkit.
 """
 
 from dataclasses import dataclass
-from enum import Enum, IntEnum, StrEnum, unique
+from enum import IntEnum, StrEnum, unique
 from pathlib import Path
-from typing import Any, Callable, Mapping, Optional, TypeVar
+from typing import Any, Callable
 
 # Core data types
 LogRecord = dict[str, Any]
 FilterFunction = Callable[[LogRecord], bool]
 FilePath = str | Path
-
-# Type variable for enum types
-T = TypeVar("T", bound="BWellEnum")
-
-
-class BWellEnum(Enum):
-    """Base enum class with bidirectional lookup methods."""
-
-    @classmethod
-    def from_value(cls: type[T], value: Any) -> T:
-        """Get enum member from its raw value. Raises ValueError if not found."""
-        return cls(value)
-
-    @classmethod
-    def try_from_value(
-        cls: type[T], value: Any, /, default: Optional[T] = None
-    ) -> Optional[T]:
-        """Get enum member from its raw value, returning default if not found."""
-        try:
-            return cls.from_value(value)
-        except ValueError:
-            return default
-
-    @classmethod
-    def get_value_mapping(cls) -> Mapping[Any, str]:
-        """Get a mapping of all raw values to their descriptive names."""
-        return {member.value: member.name for member in cls}
-
-    @classmethod
-    def get_description_mapping(cls) -> Mapping[Any, str]:
-        """Get a mapping of all raw values to their descriptions (docstrings)."""
-        return {member.value: member.__doc__ or member.name for member in cls}
 
 
 # Common record field names

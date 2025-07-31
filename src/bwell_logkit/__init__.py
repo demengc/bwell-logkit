@@ -4,7 +4,7 @@ the National Research Council (NRC) Canada's bWell application.
 """
 
 # Version and author information
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 __author__ = "Demeng Chen"
 __email__ = "contact@demeng.dev"
 
