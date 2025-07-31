@@ -3,14 +3,14 @@ Type definitions for bwell-logkit.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntEnum, StrEnum, unique
 from pathlib import Path
-from typing import Any, Callable, Optional, TypeVar, Union
+from typing import Any, Callable, Mapping, Optional, TypeVar
 
 # Core data types
 LogRecord = dict[str, Any]
 FilterFunction = Callable[[LogRecord], bool]
-FilePath = Union[str, Path]
+FilePath = str | Path
 
 # Type variable for enum types
 T = TypeVar("T", bound="BWellEnum")
@@ -22,14 +22,11 @@ class BWellEnum(Enum):
     @classmethod
     def from_value(cls: type[T], value: Any) -> T:
         """Get enum member from its raw value. Raises ValueError if not found."""
-        for member in cls:
-            if member.value == value:
-                return member
-        raise ValueError(f"No {cls.__name__} member with value {value!r}")
+        return cls(value)
 
     @classmethod
     def try_from_value(
-        cls: type[T], value: Any, default: Optional[Any] = None
+        cls: type[T], value: Any, /, default: Optional[T] = None
     ) -> Optional[T]:
         """Get enum member from its raw value, returning default if not found."""
         try:
@@ -38,18 +35,19 @@ class BWellEnum(Enum):
             return default
 
     @classmethod
-    def get_value_mapping(cls) -> dict:
+    def get_value_mapping(cls) -> Mapping[Any, str]:
         """Get a mapping of all raw values to their descriptive names."""
         return {member.value: member.name for member in cls}
 
     @classmethod
-    def get_description_mapping(cls) -> dict:
+    def get_description_mapping(cls) -> Mapping[Any, str]:
         """Get a mapping of all raw values to their descriptions (docstrings)."""
         return {member.value: member.__doc__ or member.name for member in cls}
 
 
 # Common record field names
-class RecordFields:
+@unique
+class RecordFields(StrEnum):
     """Standard field names used across bWell log records."""
 
     RECORD_TYPE = "myType"
@@ -57,20 +55,25 @@ class RecordFields:
     MILLIS_SINCE_EPOCH = "msSinceEpoch"
     ID = "ID"
 
-    class SceneEntry:
-        """Fields specific to SceneEntryRecord."""
 
-        SCENE_NAME = "sceneName"
+@unique
+class SceneEntryRecordFields(StrEnum):
+    """Fields specific to SceneEntryRecord."""
 
-    class MoleHit:
-        """Fields specific to MoleHitRecord."""
-
-        RESULT = "result"
-        MOLE_LIFE_TIME = "moleLifeTime"
-        WAS_TRICKY = "wasTricky"
+    SCENE_NAME = "sceneName"
 
 
-class RecordTypes(BWellEnum):
+@unique
+class MoleHitRecordFields(StrEnum):
+    """Fields specific to MoleHitRecord."""
+
+    RESULT = "result"
+    MOLE_LIFE_TIME = "moleLifeTime"
+    WAS_TRICKY = "wasTricky"
+
+
+@unique
+class RecordTypes(StrEnum):
     """Common bWell log record types."""
 
     GAME_SETTINGS = "GameSettingsRecord"
@@ -79,7 +82,8 @@ class RecordTypes(BWellEnum):
     MOLE_HIT = "MoleHitRecord"
 
 
-class MovementSources(BWellEnum):
+@unique
+class MovementSources(StrEnum):
     """Common sender tags for activity records."""
 
     HEAD = "Head"
@@ -87,7 +91,8 @@ class MovementSources(BWellEnum):
     RIGHT_HAND = "RightHand"
 
 
-class Scenes(BWellEnum):
+@unique
+class Scenes(StrEnum):
     """Common scene names."""
 
     SOLAR_SYSTEM = "Solar System Menu"
@@ -97,34 +102,23 @@ class Scenes(BWellEnum):
     THEATER = "Theater"
 
 
-class MoleResults(BWellEnum):
+@unique
+class MoleResults(IntEnum):
     """Constants for mole result types with bidirectional lookup."""
 
-    SUCCESS_CORRECT_COLOR = 0
-    IGNORED_TRICKY = 1
-    ERROR_GENERIC_WRONG_COLOR = 2
-    ERROR_PREVIOUS_HAND_COLOR = 3
-    ERROR_WRONG_HAND = 4
-    MISSED = 5
-    EARLY_RESPONSE_ON_TRICKY = 6
-    IGNORED_INVALID = 7
-    TABLE_CLEARING = 8
-
-    @classmethod
-    def get_description_mapping(cls) -> dict:
-        """Get a mapping of all raw values to their descriptions."""
-        descriptions = {
-            0: "Mole hit by correct colored hammer",
-            1: "Tricky mole ignored",
-            2: "Mole hit by wrong colored hammer",
-            3: "Mole hit by hammer that used to be the correct color",
-            4: "Mole hit by hammer of wrong color; other hand had correct color",
-            5: "Mole timed out and disappeared, had matching color period",
-            6: "Tricky mole hit before the stop signal",
-            7: "Mole timed out, never had matching color",
-            8: "Mole table cleared of remaining moles in play",
-        }
-        return descriptions
+    SUCCESS_CORRECT_COLOR = 0  # Mole hit by correct colored hammer
+    IGNORED_TRICKY = 1  # Tricky mole ignored
+    ERROR_GENERIC_WRONG_COLOR = 2  # Mole hit by wrong colored hammer
+    ERROR_PREVIOUS_HAND_COLOR = (
+        3  # Mole hit by hammer that used to be the correct color
+    )
+    ERROR_WRONG_HAND = (
+        4  # Mole hit by hammer of wrong color; other hand had correct color
+    )
+    MISSED = 5  # Mole timed out and disappeared, had matching color period
+    EARLY_RESPONSE_ON_TRICKY = 6  # Tricky mole hit before the stop signal
+    IGNORED_INVALID = 7  # Mole timed out, never had matching color
+    TABLE_CLEARING = 8  # Mole table cleared of remaining moles in play
 
 
 # Scene metadata

@@ -3,6 +3,12 @@ bwell-logkit: A Python library for processing and analyzing log files from
 the National Research Council (NRC) Canada's bWell application.
 """
 
+# Version and author information
+__version__ = "1.1.1"
+__author__ = "Demeng Chen"
+__email__ = "contact@demeng.dev"
+
+# Exception imports
 from .exceptions import (
     BwellLogKitError,
     ExtractionError,
@@ -10,24 +16,30 @@ from .exceptions import (
     SceneNotFoundError,
 )
 from .logs import LogSession, SceneView
+
+# Core functionality imports
 from .reader import load_all_logs, load_log, read_records
 from .scene import SceneManager
+
+# Type and constant imports
 from .types import (
     FilePath,
     FilterFunction,
     LogRecord,
+    MoleHitRecordFields,
     MovementSources,
     RecordFields,
     RecordTypes,
+    SceneEntryRecordFields,
     SceneInfo,
     Scenes,
 )
 
-__version__ = "1.1.0"
-__author__ = "Demeng Chen"
-__email__ = "contact@demeng.dev"
-
 __all__ = [
+    # Version and metadata
+    "__version__",
+    "__author__",
+    "__email__",
     # Main entry points
     "load_log",
     "load_all_logs",
@@ -38,20 +50,18 @@ __all__ = [
     "SceneManager",
     # Exceptions
     "BwellLogKitError",
+    "ExtractionError",
     "LogReadError",
     "SceneNotFoundError",
-    "ExtractionError",
     # Types and constants
-    "LogRecord",
-    "FilterFunction",
     "FilePath",
-    "SceneInfo",
+    "FilterFunction",
+    "LogRecord",
+    "MoleHitRecordFields",
+    "MovementSources",
     "RecordFields",
     "RecordTypes",
-    "MovementSources",
+    "SceneEntryRecordFields",
+    "SceneInfo",
     "Scenes",
-    # Metadata
-    "__version__",
-    "__author__",
-    "__email__",
 ]

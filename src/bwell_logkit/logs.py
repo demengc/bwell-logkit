@@ -38,7 +38,7 @@ def _clean_records(records: list[LogRecord]) -> list[LogRecord]:
     for rec in records:
         # Make a shallow copy, drop the ID
         tmp = dict(rec)
-        tmp.pop(RecordFields.ID, None)
+        tmp.pop(RecordFields.ID.value, None)
 
         key = _freeze(tmp)
 
@@ -46,7 +46,7 @@ def _clean_records(records: list[LogRecord]) -> list[LogRecord]:
             seen.add(key)
             cleaned.append(rec)
 
-    cleaned.sort(key=lambda r: r.get(RecordFields.GAME_TIME_SECS, 0.0))
+    cleaned.sort(key=lambda r: r.get(RecordFields.GAME_TIME_SECS.value, 0.0))
     return cleaned
 
 
@@ -211,7 +211,9 @@ class LogSession:
         Returns:
             LogSession: New session with filtered records
         """
-        return self.filter(lambda r: r.get(RecordFields.RECORD_TYPE) in record_types)
+        return self.filter(
+            lambda r: r.get(RecordFields.RECORD_TYPE.value) in record_types
+        )
 
     def filter_time_range(self, start: float, end: float) -> "LogSession":
         """
@@ -230,7 +232,9 @@ class LogSession:
         if not self._records:
             return LogSession([], self._metadata, _scene_manager=self._scene_manager)
 
-        timestamps = [r.get(RecordFields.GAME_TIME_SECS, 0.0) for r in self._records]
+        timestamps = [
+            r.get(RecordFields.GAME_TIME_SECS.value, 0.0) for r in self._records
+        ]
 
         start_idx = bisect.bisect_left(timestamps, start)
         end_idx = bisect.bisect_right(timestamps, end)
@@ -263,14 +267,14 @@ class LogSession:
         # Count record types
         type_counts: dict[str, int] = defaultdict(int)
         for record in self._records:
-            record_type = record.get(RecordFields.RECORD_TYPE, "unknown")
+            record_type = record.get(RecordFields.RECORD_TYPE.value, "unknown")
             type_counts[record_type] += 1
 
         # Get game time range
         game_time_stamps = [
-            r.get(RecordFields.GAME_TIME_SECS)
+            r.get(RecordFields.GAME_TIME_SECS.value)
             for r in self._records
-            if r.get(RecordFields.GAME_TIME_SECS) is not None
+            if r.get(RecordFields.GAME_TIME_SECS.value) is not None
         ]
         game_time_range = None
         if game_time_stamps:
@@ -284,9 +288,9 @@ class LogSession:
 
         # Get millis since epoch range
         epoch_stamps = [
-            r.get(RecordFields.MILLIS_SINCE_EPOCH)
+            r.get(RecordFields.MILLIS_SINCE_EPOCH.value)
             for r in self._records
-            if r.get(RecordFields.MILLIS_SINCE_EPOCH) is not None
+            if r.get(RecordFields.MILLIS_SINCE_EPOCH.value) is not None
         ]
         millis_since_epoch_range = None
         if epoch_stamps:
