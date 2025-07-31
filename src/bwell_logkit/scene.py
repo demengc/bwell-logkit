@@ -18,7 +18,7 @@ class SceneManager:
         scene_entries = [
             r
             for r in self._records
-            if r.get(RecordFields.RECORD_TYPE) == RecordTypes.SCENE_ENTRY
+            if r.get(RecordFields.RECORD_TYPE) == RecordTypes.SCENE_ENTRY.value
         ]
 
         if not scene_entries:

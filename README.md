@@ -47,12 +47,12 @@ df = session.to_pandas()
 print(f"DataFrame shape: {df.shape}")
 
 # Filter for movement data
-movement_session = session.filter_type(RecordTypes.ABSOLUTE_ACTIVITY)
+movement_session = session.filter_type(RecordTypes.ABSOLUTE_ACTIVITY.value)
 print(f"Movement records: {len(movement_session)}")
 
 # Filter for head tracking specifically
 head_movement = movement_session.filter(
-    lambda r: r.get("senderTag") == MovementSources.HEAD
+    lambda r: r.get("senderTag") == MovementSources.HEAD.value
 )
 print(f"Head tracking records: {len(head_movement)}")
 

@@ -56,16 +56,16 @@ def main():
 
     # 3. Filter by record type
     print("\n3. Filtering by record type...")
-    movement_session = session.filter_type(RecordTypes.ABSOLUTE_ACTIVITY)
+    movement_session = session.filter_type(RecordTypes.ABSOLUTE_ACTIVITY.value)
     print(f"   Movement records: {len(movement_session)}")
 
-    settings_session = session.filter_type(RecordTypes.GAME_SETTINGS)
+    settings_session = session.filter_type(RecordTypes.GAME_SETTINGS.value)
     print(f"   Game settings records: {len(settings_session)}")
 
     # 4. Filter by custom filter
     print("\n4. Filtering by custom filter (head senderTag)...")
     head_movement = movement_session.filter(
-        lambda r: r.get("senderTag") == MovementSources.HEAD
+        lambda r: r.get("senderTag") == MovementSources.HEAD.value
     )
     print(f"   Head tracking records: {len(head_movement)}")
 
@@ -113,9 +113,9 @@ def main():
     # 8. Chained filtering example
     print("\n8. Chained filtering example...")
     complex_filter = (
-        session.filter_type(RecordTypes.ABSOLUTE_ACTIVITY)
+        session.filter_type(RecordTypes.ABSOLUTE_ACTIVITY.value)
         .filter_time_range(10, 120)  # 10-120 seconds
-        .filter(lambda r: r.get("senderTag") == MovementSources.HEAD)
+        .filter(lambda r: r.get("senderTag") == MovementSources.HEAD.value)
     )
     print(f"   Head movement in 10-120s range: {len(complex_filter)} records")
 
@@ -147,7 +147,7 @@ def main():
     print("Session metadata:", session.metadata)
 
     # Metadata is preserved when filtering
-    filtered_session = session.filter_type(RecordTypes.ABSOLUTE_ACTIVITY)
+    filtered_session = session.filter_type(RecordTypes.ABSOLUTE_ACTIVITY.value)
     print("Filtered session still has metadata:", filtered_session.metadata)
 
     # Scene views also inherit and can modify metadata
