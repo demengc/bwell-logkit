@@ -15,7 +15,10 @@ from .scene import SceneManager
 from .types import (
     FilePath,
     FilterFunction,
+    LabIngredients,
+    LabResults,
     LogRecord,
+    MoleResults,
     MovementSources,
     RecordFields,
     RecordTypes,
@@ -50,6 +53,9 @@ __all__ = [
     "RecordTypes",
     "MovementSources",
     "Scenes",
+    "MoleResults",
+    "LabIngredients",
+    "LabResults",
     # Metadata
     "__version__",
     "__author__",
