@@ -4,13 +4,7 @@ from collections import defaultdict
 from typing import Literal, Optional
 
 from .exceptions import SceneNotFoundError
-from .types import (
-    LogRecord,
-    RecordFields,
-    RecordTypes,
-    SceneEntryRecordFields,
-    SceneInfo,
-)
+from .types import LogRecord, RecordFields, RecordTypes, SceneInfo
 
 
 class SceneManager:
@@ -24,7 +18,7 @@ class SceneManager:
         scene_entries = [
             r
             for r in self._records
-            if r.get(RecordFields.RECORD_TYPE.value) == RecordTypes.SCENE_ENTRY.value
+            if r.get(RecordFields.RECORD_TYPE) == RecordTypes.SCENE_ENTRY.value
         ]
 
         if not scene_entries:
@@ -33,29 +27,26 @@ class SceneManager:
         scenes: dict[str, list[SceneInfo]] = defaultdict(list)
 
         for i, entry in enumerate(scene_entries):
-            scene_name = entry.get(SceneEntryRecordFields.SCENE_NAME.value)
+            scene_name = entry.get(RecordFields.SceneEntry.SCENE_NAME)
 
             if not scene_name:
                 continue
 
-            start_gt = entry.get(RecordFields.GAME_TIME_SECS.value, 0)
-            start_epoch = entry.get(RecordFields.MILLIS_SINCE_EPOCH.value, 0)
+            start_gt = entry.get(RecordFields.GAME_TIME_SECS, 0)
+            start_epoch = entry.get(RecordFields.MILLIS_SINCE_EPOCH, 0)
 
             if i + 1 < len(scene_entries):
-                end_gt = scene_entries[i + 1].get(
-                    RecordFields.GAME_TIME_SECS.value, start_gt
-                )
+                end_gt = scene_entries[i + 1].get(RecordFields.GAME_TIME_SECS, start_gt)
                 end_epoch = scene_entries[i + 1].get(
-                    RecordFields.MILLIS_SINCE_EPOCH.value, start_epoch
+                    RecordFields.MILLIS_SINCE_EPOCH, start_epoch
                 )
             else:
                 # Find the last record's timestamp
                 gt_timestamps = [
-                    r.get(RecordFields.GAME_TIME_SECS.value, 0) for r in self._records
+                    r.get(RecordFields.GAME_TIME_SECS, 0) for r in self._records
                 ]
                 epoch_timestamps = [
-                    r.get(RecordFields.MILLIS_SINCE_EPOCH.value, 0)
-                    for r in self._records
+                    r.get(RecordFields.MILLIS_SINCE_EPOCH, 0) for r in self._records
                 ]
                 end_gt = max(gt_timestamps, default=start_gt)
                 end_epoch = max(epoch_timestamps, default=start_epoch)
@@ -101,7 +92,7 @@ class SceneManager:
             r
             for r in self._records
             if info.start_game_time_secs
-            <= r.get(RecordFields.GAME_TIME_SECS.value, 0)
+            <= r.get(RecordFields.GAME_TIME_SECS, 0)
             <= info.end_game_time_secs
         ]
 
