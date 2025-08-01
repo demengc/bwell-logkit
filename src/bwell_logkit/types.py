@@ -33,6 +33,13 @@ class RecordFields:
         MOLE_LIFE_TIME = "moleLifeTime"
         WAS_TRICKY = "wasTricky"
 
+    class LabPour:
+        """Fields specific to LabPourEventRecord."""
+
+        INGREDIENT = "ingredient"
+        POUR_TYPE = "pourType"
+        TIME_ERROR_DELAY = "timeErrorDelay"
+
 
 # Record type constants
 class RecordTypes:
@@ -42,6 +49,7 @@ class RecordTypes:
     ABSOLUTE_ACTIVITY = "AbsoluteActivityRecord"
     SCENE_ENTRY = "SceneEntryRecord"
     MOLE_HIT = "MoleHitRecord"
+    LAB_POUR = "LabPourEventRecord"
 
 
 # Sender tag constants
@@ -86,6 +94,34 @@ class MoleResults:
     IGNORED_INVALID = 7
     # Mole table cleared of remaining moles in play
     TABLE_CLEARING = 8
+
+
+# Ingredient constants
+class LabIngredients:
+    """Constants for ingredient types."""
+
+    PURPLE_POWDER = 0
+    BLACK_POWDER = 1
+    WHITE_POWDER = 2
+    GREEN_POWDER = 3
+    YELLOW_POWDER = 4
+    RED_POWDER = 5
+    BLUE_POWDER = 6
+    ORANGE_POWDER = 7
+    PINK_POWDER = 8
+    UNDEFINED = 9
+
+
+# Lab pour type constants
+class LabResults:
+    """Constants for lab pour type types."""
+
+    CORRECT = 0
+    EARLY = 1
+    LATE = 2
+    WRONG_DURING_POURING = 3
+    WRONG_OUTSIDE_POURING = 4
+    NONE = 5
 
 
 # Scene metadata
